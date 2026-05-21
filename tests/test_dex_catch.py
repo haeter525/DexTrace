@@ -5,7 +5,7 @@
 """
 Parser-level tests for try_item + encoded_catch_handler decoding.
 
-Uses the P5a fixture as ground truth: one method (divCatch), one try region
+Uses the try-catch fixture as ground truth: one method (divCatch), one try region
 covering pc 0..2, one typed catch (ArithmeticException) at pc=3.
 """
 
@@ -22,7 +22,7 @@ from dextrace.core.dex_resolver import DexResolver
 FIXTURE = (
     Path(__file__).parent / "fixtures" / "samples" / "try_catch.dex"
 )
-ENTRY = "Lp5a;->divCatch(II)I"
+ENTRY = "LTryCatchTest;->divCatch(II)I"
 
 
 @pytest.fixture(scope="module")
@@ -67,15 +67,15 @@ def test_catch_resolves_to_arithmetic_exception(context):
 
 def test_method_without_tries_returns_empty_list():
     """A code_item with tries_size=0 must return [] without touching post-insns bytes."""
-    # Use the P3 inheritance fixture: every method has tries_size=0.
-    p3 = Path(__file__).parent / "fixtures" / "samples" / "inheritance.dex"
-    if not p3.exists():
-        pytest.skip("P3 fixture not present")
-    dex = p3.read_bytes()
+    # Use the inheritance fixture: every method has tries_size=0.
+    fixture_path = Path(__file__).parent / "fixtures" / "samples" / "inheritance.dex"
+    if not fixture_path.exists():
+        pytest.skip("Inheritance fixture not present")
+    dex = fixture_path.read_bytes()
     resolver = DexResolver(dex)
     sig_map = build_sig_to_codeoff_map(dex, resolver)
     parser = DexParser(dex)
     for sig, off in sig_map.items():
         assert parser.parse_tries(off, resolver) == [], (
-            f"P3 method {sig} unexpectedly reported try regions"
+            f"Method {sig} unexpectedly reported try regions"
         )

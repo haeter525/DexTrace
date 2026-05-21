@@ -5,7 +5,7 @@
 Build tests/fixtures/samples/const_return.dex programmatically.
 
 DEX contains one class and one method:
-  class:  Lp1;  (extends Ljava/lang/Object;)
+  class:  LConstReturnTest;  (extends Ljava/lang/Object;)
   method: public static int main()
   body:   const/16 v0, 42
           return v0
@@ -44,16 +44,16 @@ def build_const_return_dex() -> (
 ):  # pylint: disable=too-many-locals,too-many-statements
     # -----------------------------------------------------------------------
     # String table (must be sorted by Unicode code point — DEX requirement)
-    # "I" < "Ljava/lang/Object;" < "Lp1;" < "main"
+    # "I" < "Ljava/lang/Object;" < "LConstReturnTest;" < "main"
     # -----------------------------------------------------------------------
-    strings = ["I", "Ljava/lang/Object;", "Lp1;", "main"]
+    strings = ["I", "Ljava/lang/Object;", "LConstReturnTest;", "main"]
     # indices:   0          1                2        3
 
     # -----------------------------------------------------------------------
     # Type IDs (sorted by descriptor string)
     # type_idx 0 -> string_idx 0  = "I"
     # type_idx 1 -> string_idx 1  = "Ljava/lang/Object;"
-    # type_idx 2 -> string_idx 2  = "Lp1;"
+    # type_idx 2 -> string_idx 2  = "LConstReturnTest;"
     # -----------------------------------------------------------------------
     type_string_ids = [0, 1, 2]
 
@@ -66,7 +66,7 @@ def build_const_return_dex() -> (
 
     # -----------------------------------------------------------------------
     # Method IDs
-    # method 0: Lp1;->main()I
+    # method 0: LConstReturnTest;->main()I
     #   class_idx=2  proto_idx=0  name_string_idx=3
     # -----------------------------------------------------------------------
     # (class_type_idx, proto_idx, name_string_idx)
@@ -183,7 +183,7 @@ def build_const_return_dex() -> (
     # class_def_item (32 bytes)
     class_def_item = struct.pack(
         "<IIIIIIII",
-        2,  # class_idx -> "Lp1;"
+        2,  # class_idx -> "LConstReturnTest;"
         0x1,  # access_flags: public
         1,  # superclass_idx -> "Ljava/lang/Object;"
         0,  # interfaces_off

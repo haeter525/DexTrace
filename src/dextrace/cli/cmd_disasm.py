@@ -32,9 +32,9 @@ def register(p: argparse.ArgumentParser) -> None:
         "--format",
         choices=["smali"],
         default="smali",
-        help="Output format (MVP: smali only)",
+        help="Output format",
     )
-    p.add_argument("--json", action="store_true", help="Output JSON to stdout (MVP: always JSON)")
+    p.add_argument("--json", action="store_true", help="Output JSON to stdout")
     p.add_argument("--max-insns", type=int, default=0, help="Max instructions per method (0 = no limit)")
     p.add_argument("--accept-optimized", action="store_true", help="Accept optimized opcodes (default: false)")
     p.set_defaults(func=run)
@@ -160,6 +160,6 @@ def run(args: argparse.Namespace) -> int:
         except Exception as e:
             out["errors"][sig] = {"error": type(e).__name__, "message": str(e)}
 
-    # MVP: Always print JSON
+    # Always print JSON
     print(json.dumps(out, ensure_ascii=False))
     return 0

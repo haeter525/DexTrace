@@ -22,7 +22,7 @@ class DexTraceVMError(Exception):
 
 
 class DexTraceNotImplementedError(DexTraceVMError):
-    """Raised when an opcode has no handler (unimplemented or deferred to a later phase)."""
+    """Raised when an opcode has no handler (unimplemented)."""
 
 
 class DexTraceJavaException(DexTraceVMError):

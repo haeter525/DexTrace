@@ -5,7 +5,7 @@
 """
 Tests for vm/trace.py — ExecutionTrace capture across the full VM.
 
-Reuses the P5e array-sum fixture because it exercises the four event
+Reuses the array-sum fixture because it exercises the four event
 types we care about together: register writes (const/4, add-int),
 fall-through arithmetic, taken backward branch (goto -8), and a forward
 branch (if-ge to loop exit).
@@ -23,8 +23,8 @@ from dextrace.vm.engine import DalvikVM
 from dextrace.vm.trace import ExecutionTrace, TraceStep
 
 
-P5E = Path(__file__).parent.parent / "fixtures" / "samples" / "arrays.dex"
-P5F = Path(__file__).parent.parent / "fixtures" / "samples" / "interface_dispatch.dex"
+ARRAY_FIXTURE = Path(__file__).parent.parent / "fixtures" / "samples" / "arrays.dex"
+INTERFACE_FIXTURE = Path(__file__).parent.parent / "fixtures" / "samples" / "interface_dispatch.dex"
 
 
 def _make_vm(fixture: Path, trace: ExecutionTrace) -> DalvikVM:
@@ -36,8 +36,8 @@ def _make_vm(fixture: Path, trace: ExecutionTrace) -> DalvikVM:
 
 def test_trace_records_each_executed_instruction():
     trace = ExecutionTrace()
-    vm = _make_vm(P5E, trace)
-    assert vm.run("Lp5e;->arraySum()I") == 60
+    vm = _make_vm(ARRAY_FIXTURE, trace)
+    assert vm.run("LArraysTest;->arraySum()I") == 60
 
     # Sanity: every step has a known mnemonic and a non-negative timing.
     assert len(trace) > 0
@@ -49,8 +49,8 @@ def test_trace_records_each_executed_instruction():
 
 def test_trace_captures_taken_backward_branch():
     trace = ExecutionTrace()
-    vm = _make_vm(P5E, trace)
-    vm.run("Lp5e;->arraySum()I")
+    vm = _make_vm(ARRAY_FIXTURE, trace)
+    vm.run("LArraysTest;->arraySum()I")
 
     # Loop body executes 3 times → goto -8 fires 3 times as a taken branch.
     goto_steps = [s for s in trace.steps if s.mnemonic == "goto"]
@@ -62,8 +62,8 @@ def test_trace_captures_taken_backward_branch():
 
 def test_trace_captures_register_writes():
     trace = ExecutionTrace()
-    vm = _make_vm(P5E, trace)
-    vm.run("Lp5e;->arraySum()I")
+    vm = _make_vm(ARRAY_FIXTURE, trace)
+    vm.run("LArraysTest;->arraySum()I")
 
     # const/4 v3, #0 must record a write of 0 to v3 once. add-int v3, v3, v4
     # must record three writes to v3 (one per loop iteration: 10, 30, 60).
@@ -78,8 +78,8 @@ def test_trace_captures_register_writes():
 
 def test_trace_captures_frame_changes_on_invoke_and_return():
     trace = ExecutionTrace()
-    vm = _make_vm(P5F, trace)
-    assert vm.run("Lp5f;->callIFace()I") == 7
+    vm = _make_vm(INTERFACE_FIXTURE, trace)
+    assert vm.run("LInterfaceDispatchTest;->callIFace()I") == 7
 
     # Exactly one invoke entry (callIFace → value) and one return back.
     swaps = trace.frame_changes
@@ -90,8 +90,8 @@ def test_trace_captures_frame_changes_on_invoke_and_return():
 
 def test_trace_disabled_by_default_costs_nothing():
     # No execution_trace param → engine pays a single None check per step.
-    dex = P5E.read_bytes()
+    dex = ARRAY_FIXTURE.read_bytes()
     resolver = DexResolver(dex)
     sig_map = build_sig_to_codeoff_map(dex, resolver)
     vm = DalvikVM(dex, resolver, sig_map)
-    assert vm.run("Lp5e;->arraySum()I") == 60
+    assert vm.run("LArraysTest;->arraySum()I") == 60

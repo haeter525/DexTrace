@@ -1,17 +1,17 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# pylint: disable=duplicate-code  # gen_p1/p2/p3/p5a share DEX builder boilerplate intentionally
+# pylint: disable=duplicate-code  # fixture scripts share DEX builder boilerplate intentionally
 """
 Build tests/fixtures/samples/try_catch.dex programmatically.
 
 Method:
-  Lp5a;->divCatch(II)I  (static)
+  LTryCatchTest;->divCatch(II)I  (static)
     try   { return v2 / v3 }
     catch (Ljava/lang/ArithmeticException;) { return -1 }
 
 Verification:
   python -m dextrace run tests/fixtures/samples/try_catch.dex \\
-      --entry 'Lp5a;->divCatch(II)I' --arg 10 --arg 0
+      --entry 'LTryCatchTest;->divCatch(II)I' --arg 10 --arg 0
   # → return: -1
 """
 
@@ -65,7 +65,7 @@ def build_try_catch_dex() -> bytes:  # pylint: disable=too-many-locals,too-many-
     #  1: "III"                            (shorty for (II)I)
     #  2: "Ljava/lang/ArithmeticException;"
     #  3: "Ljava/lang/Object;"
-    #  4: "Lp5a;"
+    #  4: "LTryCatchTest;"
     #  5: "divCatch"
     # -----------------------------------------------------------------------
     strings = [
@@ -73,7 +73,7 @@ def build_try_catch_dex() -> bytes:  # pylint: disable=too-many-locals,too-many-
         "III",
         "Ljava/lang/ArithmeticException;",
         "Ljava/lang/Object;",
-        "Lp5a;",
+        "LTryCatchTest;",
         "divCatch",
     ]
 
@@ -81,7 +81,7 @@ def build_try_catch_dex() -> bytes:  # pylint: disable=too-many-locals,too-many-
     #  type 0 → str 0  "I"
     #  type 1 → str 2  "Ljava/lang/ArithmeticException;"
     #  type 2 → str 3  "Ljava/lang/Object;"
-    #  type 3 → str 4  "Lp5a;"
+    #  type 3 → str 4  "LTryCatchTest;"
     type_string_ids = [0, 2, 3, 4]
 
     # proto_ids
@@ -90,7 +90,7 @@ def build_try_catch_dex() -> bytes:  # pylint: disable=too-many-locals,too-many-
     protos = [(1, 0)]  # (shorty_idx, return_type_idx)
 
     # method_ids (sorted by class_idx, then name_idx, then proto_idx)
-    #  method 0: Lp5a;->divCatch(II)I  class=type3, name=str5, proto=0
+    #  method 0: LTryCatchTest;->divCatch(II)I  class=type3, name=str5, proto=0
     method_ids = [(3, 0, 5)]
 
     # -----------------------------------------------------------------------
@@ -190,7 +190,7 @@ def build_try_catch_dex() -> bytes:  # pylint: disable=too-many-locals,too-many-
     data.extend(try_item)
     data.extend(handlers_list)
 
-    # class_data for Lp5a;
+    # class_data for LTryCatchTest;
     #   direct: method 0 (divCatch)  diff=0, acc=ACC_PUBLIC|ACC_STATIC
     ACC_PUBLIC = 0x1
     ACC_STATIC = 0x8
@@ -249,7 +249,7 @@ def build_try_catch_dex() -> bytes:  # pylint: disable=too-many-locals,too-many-
         for cls_idx, proto_idx, name_idx in method_ids
     )
 
-    # class_def for Lp5a;: class=3, super=2 (Object), data=class_data_off
+    # class_def for LTryCatchTest;: class=3, super=2 (Object), data=class_data_off
     class_def_items = struct.pack(
         "<IIIIIIII",
         3,                # class_idx

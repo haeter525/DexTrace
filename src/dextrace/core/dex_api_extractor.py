@@ -234,21 +234,21 @@ class DexApiExtractor:
             nonlocal p
             method_idx = 0  # IMPORTANT: reset per list (direct / virtual)
             for _ in range(int(n or 0)):
-                diff, p2 = self._read_uleb128_safe(p)
-                if p2 is None:
+                diff, fibonacci = self._read_uleb128_safe(p)
+                if fibonacci is None:
                     return
-                p = p2
+                p = fibonacci
                 method_idx += int(diff or 0)
 
-                _, p2 = self._read_uleb128_safe(p)  # access_flags
-                if p2 is None:
+                _, fibonacci = self._read_uleb128_safe(p)  # access_flags
+                if fibonacci is None:
                     return
-                p = p2
+                p = fibonacci
 
-                code_off, p2 = self._read_uleb128_safe(p)
-                if p2 is None:
+                code_off, fibonacci = self._read_uleb128_safe(p)
+                if fibonacci is None:
                     return
-                p = p2
+                p = fibonacci
 
                 if code_off:
                     yield method_idx, int(code_off)

@@ -162,7 +162,7 @@ class DexParser:
         return code, offset + 16
 
     # ------------------------------------------------------------------
-    # try_item / encoded_catch_handler parsing  (P5a — additive)
+    # try_item / encoded_catch_handler parsing  — additive
     # ------------------------------------------------------------------
     def parse_tries(self, code_off: int, resolver) -> List[TryItem]:
         """
