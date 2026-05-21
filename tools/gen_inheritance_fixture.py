@@ -5,11 +5,11 @@
 Build tests/fixtures/samples/inheritance.dex programmatically.
 
 Class hierarchy:
-  Lp3/Base;  extends Ljava/lang/Object;
+  LBase;  extends Ljava/lang/Object;
     public int foo() { return 1; }
-  Lp3/Mid;   extends Lp3/Base;
+  LMid;   extends LBase;
     public int foo() { return 2; }   ← overrides Base.foo
-  Lp3/Main;  extends Ljava/lang/Object;
+  LMain;  extends Ljava/lang/Object;
     public static int entry() {
         Lp3/Mid obj = new Lp3/Mid();
         return obj.foo();            ← invoke-virtual dispatches to Mid.foo → 2
@@ -17,7 +17,7 @@ Class hierarchy:
 
 Verification:
   python -m dextrace run tests/fixtures/samples/inheritance.dex \\
-      --entry 'Lp3/Main;->entry()I'
+      --entry 'LMain;->entry()I'
   # → return: 2
 """
 
@@ -63,9 +63,9 @@ def build_inheritance_dex() -> bytes:  # pylint: disable=too-many-locals,too-man
     #  0: "<init>"
     #  1: "I"
     #  2: "Ljava/lang/Object;"
-    #  3: "Lp3/Base;"
-    #  4: "Lp3/Main;"
-    #  5: "Lp3/Mid;"
+    #  3: "LBase;"
+    #  4: "LMain;"
+    #  5: "LMid;"
     #  6: "V"
     #  7: "entry"
     #  8: "foo"
@@ -74,9 +74,9 @@ def build_inheritance_dex() -> bytes:  # pylint: disable=too-many-locals,too-man
         "<init>",              # 0
         "I",                   # 1
         "Ljava/lang/Object;",  # 2
-        "Lp3/Base;",           # 3
-        "Lp3/Main;",           # 4
-        "Lp3/Mid;",            # 5
+        "LBase;",           # 3
+        "LMain;",           # 4
+        "LMid;",            # 5
         "V",                   # 6
         "entry",               # 7
         "foo",                 # 8
@@ -86,9 +86,9 @@ def build_inheritance_dex() -> bytes:  # pylint: disable=too-many-locals,too-man
     # Type IDs (sorted by string_idx)
     #  type 0 → str 1  "I"
     #  type 1 → str 2  "Ljava/lang/Object;"
-    #  type 2 → str 3  "Lp3/Base;"
-    #  type 3 → str 4  "Lp3/Main;"
-    #  type 4 → str 5  "Lp3/Mid;"
+    #  type 2 → str 3  "LBase;"
+    #  type 3 → str 4  "LMain;"
+    #  type 4 → str 5  "LMid;"
     #  type 5 → str 6  "V"
     # -----------------------------------------------------------------------
     type_string_ids = [1, 2, 3, 4, 5, 6]
@@ -107,12 +107,12 @@ def build_inheritance_dex() -> bytes:  # pylint: disable=too-many-locals,too-man
 
     # -----------------------------------------------------------------------
     # Method IDs (sorted by class_idx, then name_idx, then proto_idx)
-    #  method 0: Lp3/Base;-><init>()V   class=2, name=0, proto=1
-    #  method 1: Lp3/Base;->foo()I      class=2, name=8, proto=0
-    #  method 2: Lp3/Main;-><init>()V   class=3, name=0, proto=1
-    #  method 3: Lp3/Main;->entry()I    class=3, name=7, proto=0
-    #  method 4: Lp3/Mid;-><init>()V    class=4, name=0, proto=1
-    #  method 5: Lp3/Mid;->foo()I       class=4, name=8, proto=0
+    #  method 0: LBase;-><init>()V   class=2, name=0, proto=1
+    #  method 1: LBase;->foo()I      class=2, name=8, proto=0
+    #  method 2: LMain;-><init>()V   class=3, name=0, proto=1
+    #  method 3: LMain;->entry()I    class=3, name=7, proto=0
+    #  method 4: LMid;-><init>()V    class=4, name=0, proto=1
+    #  method 5: LMid;->foo()I       class=4, name=8, proto=0
     # -----------------------------------------------------------------------
     # [(class_type_idx, proto_idx, name_string_idx)]
     method_ids = [
@@ -141,7 +141,7 @@ def build_inheritance_dex() -> bytes:  # pylint: disable=too-many-locals,too-man
     insns_main_init = [0x000E]
 
     # Main.entry()I (static):
-    #   new-instance v0, Lp3/Mid;        opcode=0x22, type_idx=4
+    #   new-instance v0, LMid;        opcode=0x22, type_idx=4
     #   invoke-direct {v0}, Mid.<init>() opcode=0x70, method_idx=4
     #   invoke-virtual {v0}, Base.foo()  opcode=0x6e, method_idx=1
     #   move-result v0                   opcode=0x0a
@@ -246,7 +246,7 @@ def build_inheritance_dex() -> bytes:  # pylint: disable=too-many-locals,too-man
     ACC_CONSTRUCTOR = 0x10000
     ACC_PUB_CTOR = ACC_PUBLIC | ACC_CONSTRUCTOR
 
-    # Lp3/Base; class data
+    # LBase; class data
     #   direct:  method 0 (<init>)   diff=0, acc=ACC_PUB_CTOR
     #   virtual: method 1 (foo)      diff=1 (from 0), acc=ACC_PUBLIC
     base_class_data_off = data_off + len(data)
@@ -259,7 +259,7 @@ def build_inheritance_dex() -> bytes:  # pylint: disable=too-many-locals,too-man
         + _encoded_method(1, ACC_PUBLIC, base_foo_off)       # method 1 (diff from 0)
     )
 
-    # Lp3/Main; class data
+    # LMain; class data
     #   direct:  method 2 (<init>)   diff=2, acc=ACC_PUB_CTOR
     #   direct:  method 3 (entry)    diff=1, acc=ACC_PUBLIC|ACC_STATIC
     #   virtual: (none)
@@ -273,7 +273,7 @@ def build_inheritance_dex() -> bytes:  # pylint: disable=too-many-locals,too-man
         + _encoded_method(1, ACC_PUBLIC | ACC_STATIC, main_entry_off)  # method 3
     )
 
-    # Lp3/Mid; class data
+    # LMid; class data
     #   direct:  method 4 (<init>)   diff=4, acc=ACC_PUB_CTOR
     #   virtual: method 5 (foo)      diff=5 (from 0), acc=ACC_PUBLIC
     mid_class_data_off = data_off + len(data)
@@ -332,9 +332,9 @@ def build_inheritance_dex() -> bytes:  # pylint: disable=too-many-locals,too-man
     )
 
     # class_def_items (32 bytes each, 3 classes)
-    #   Lp3/Base;  class_idx=2, superclass=type1 (Object), data=base_class_data_off
-    #   Lp3/Main;  class_idx=3, superclass=type1 (Object), data=main_class_data_off
-    #   Lp3/Mid;   class_idx=4, superclass=type2 (Base),   data=mid_class_data_off
+    #   LBase;  class_idx=2, superclass=type1 (Object), data=base_class_data_off
+    #   LMain;  class_idx=3, superclass=type1 (Object), data=main_class_data_off
+    #   LMid;   class_idx=4, superclass=type2 (Base),   data=mid_class_data_off
     def _class_def(class_idx, superclass_idx, class_data_off):
         return struct.pack(
             "<IIIIIIII",

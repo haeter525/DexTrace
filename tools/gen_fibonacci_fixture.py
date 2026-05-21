@@ -5,7 +5,7 @@
 Build tests/fixtures/samples/fib_recursive.dex programmatically.
 
 DEX contains one class and one method:
-  class:  Lp2/Fib;  (extends Ljava/lang/Object;)
+  class:  LFibonacciTest;  (extends Ljava/lang/Object;)
   method: public static int fib(int n)
   body:
     // if n <= 1, return n
@@ -13,11 +13,11 @@ DEX contains one class and one method:
     if-le     v2, v0, :base
     // fib(n-1)
     add-int/lit8  v1, v2, #-1
-    invoke-static {v1}, Lp2/Fib;->fib(I)I
+    invoke-static {v1}, LFibonacciTest;->fib(I)I
     move-result   v0
     // fib(n-2)
     add-int/lit8  v1, v2, #-2
-    invoke-static {v1}, Lp2/Fib;->fib(I)I
+    invoke-static {v1}, LFibonacciTest;->fib(I)I
     move-result   v1
     // return sum
     add-int   v0, v0, v1
@@ -65,16 +65,16 @@ def build_fibonacci_dex() -> (
 ):  # pylint: disable=too-many-locals,too-many-statements
     # -----------------------------------------------------------------------
     # String table (sorted by Unicode code point — DEX requirement)
-    # "I" < "II" < "Ljava/lang/Object;" < "Lp2/Fib;" < "fib"
+    # "I" < "II" < "Ljava/lang/Object;" < "LFibonacciTest;" < "fib"
     # -----------------------------------------------------------------------
-    strings = ["I", "II", "Ljava/lang/Object;", "Lp2/Fib;", "fib"]
+    strings = ["I", "II", "Ljava/lang/Object;", "LFibonacciTest;", "fib"]
     # indices:   0    1          2                    3         4
 
     # -----------------------------------------------------------------------
     # Type IDs (sorted by string index)
     # type 0 -> string 0  "I"
     # type 1 -> string 2  "Ljava/lang/Object;"
-    # type 2 -> string 3  "Lp2/Fib;"
+    # type 2 -> string 3  "LFibonacciTest;"
     # -----------------------------------------------------------------------
     type_string_ids = [0, 2, 3]
 
@@ -89,7 +89,7 @@ def build_fibonacci_dex() -> (
 
     # -----------------------------------------------------------------------
     # Method IDs
-    # method 0: Lp2/Fib;->fib(I)I
+    # method 0: LFibonacciTest;->fib(I)I
     #   class_type_idx=2  proto_idx=0  name_string_idx=4 ("fib")
     # -----------------------------------------------------------------------
     # (class_type_idx, proto_idx, name_string_idx)
@@ -249,7 +249,7 @@ def build_fibonacci_dex() -> (
     # class_def_item (32 bytes)
     class_def_item = struct.pack(
         "<IIIIIIII",
-        2,  # class_idx -> "Lp2/Fib;"
+        2,  # class_idx -> "LFibonacciTest;"
         0x1,  # access_flags: public
         1,  # superclass_idx -> "Ljava/lang/Object;"
         0,  # interfaces_off
