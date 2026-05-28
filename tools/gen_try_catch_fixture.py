@@ -214,18 +214,23 @@ def build_try_catch_dex() -> bytes:  # pylint: disable=too-many-locals,too-many-
     def _map_item(type_code, count, offset):
         return struct.pack("<HHII", type_code, 0, count, offset)
 
+    # DEX spec: map_list entries must be ordered by initial offset.
+    map_entries = [
+        (0x0000, 1, 0),
+        (0x0001, len(strings), string_ids_off),
+        (0x0002, len(type_string_ids), type_ids_off),
+        (0x0003, len(protos), proto_ids_off),
+        (0x0005, len(method_ids), method_ids_off),
+        (0x0006, 1, class_defs_off),
+        (0x2002, len(strings), string_data_offs[0]),
+        (0x1001, 1, type_list_off),
+        (0x2001, 1, divcatch_code_off),
+        (0x2000, 1, class_data_off),
+        (0x1000, 1, map_off),
+    ]
     map_items = [
-        _map_item(0x0000, 1, 0),
-        _map_item(0x0001, len(strings), string_ids_off),
-        _map_item(0x0002, len(type_string_ids), type_ids_off),
-        _map_item(0x0003, len(protos), proto_ids_off),
-        _map_item(0x0005, len(method_ids), method_ids_off),
-        _map_item(0x0006, 1, class_defs_off),
-        _map_item(0x1001, 1, type_list_off),
-        _map_item(0x2000, 1, class_data_off),
-        _map_item(0x2001, 1, divcatch_code_off),
-        _map_item(0x2002, len(strings), string_data_offs[0]),
-        _map_item(0x1000, 1, map_off),
+        _map_item(type_code, count, offset)
+        for type_code, count, offset in sorted(map_entries, key=lambda item: item[2])
     ]
     data.extend(struct.pack("<I", len(map_items)) + b"".join(map_items))
 

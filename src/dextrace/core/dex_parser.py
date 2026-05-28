@@ -303,8 +303,10 @@ class DexParser:
             addr, off = self._read_uleb128(off)
             try:
                 cd = resolver.get_type(int(type_idx))
-            except Exception:  # pylint: disable=broad-exception-caught
-                cd = "Ljava/lang/Throwable;"
+            except Exception as err:  # pylint: disable=broad-exception-caught
+                raise DexFormatError(
+                    f"Invalid catch handler type_idx={type_idx}"
+                ) from err
             out.append(CatchHandler(class_desc=cd, handler_addr=int(addr)))
 
         if has_catch_all:
