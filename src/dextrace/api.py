@@ -5,6 +5,8 @@
 
 from __future__ import annotations
 
+import functools
+import logging
 import multiprocessing
 import os
 import signal
@@ -12,9 +14,11 @@ import subprocess
 import sys
 from dataclasses import dataclass
 from os import PathLike
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Set, Tuple, Union
 
 PathT = Union[str, PathLike]
+
+_log = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
@@ -92,17 +96,23 @@ def read_apk_file(apk_path: PathT, name: str) -> bytes:
     return apk.read_file(name)
 
 
+@functools.lru_cache(maxsize=8)
+def _iter_apk_dex_files_cached(apk_path: str) -> List[Tuple[str, bytes]]:
+    """Cached inner helper — returns same list object for repeated calls with the same path."""
+    from dextrace.core.apk_reader import ApkReader  # type: ignore
+
+    apk = ApkReader(apk_path)
+    out = apk.iter_dex_files()
+    out.sort(key=lambda t: (t[0] != "classes.dex", t[0]))
+    return out
+
+
 def iter_apk_dex_files(apk_path: PathT) -> List[Tuple[str, bytes]]:
     """
     Return list of (dex_name, dex_bytes) for all dex entries.
     Uses ApkReader.iter_dex_files() directly.
     """
-    from dextrace.core.apk_reader import ApkReader  # type: ignore
-
-    apk = ApkReader(str(apk_path))
-    out = apk.iter_dex_files()
-    out.sort(key=lambda t: (t[0] != "classes.dex", t[0]))
-    return out
+    return list(_iter_apk_dex_files_cached(str(apk_path)))
 
 
 def read_all_dex_bytes(apk_path: PathT) -> List[bytes]:
@@ -329,6 +339,41 @@ def disasm_method(target: PathT, method_sig: str, *, options: Optional[DextraceA
     )
 
 
+def extract_class_hierarchy(
+    target: PathT,
+) -> Dict[str, Set[str]]:
+    """
+    Return {class_descriptor: {parent_descriptors}} for every class defined in
+    the DEX(es) of `target`. Each value set contains the direct superclass and
+    all implemented interfaces. Matches the shape returned by Androguard's
+    superclass_relationships.
+    """
+    from dextrace.vm.class_hierarchy import _build_full_parent_map  # type: ignore (private helper; no stubs)
+    from dextrace.core.dex_resolver import DexResolver               # type: ignore
+
+    result: Dict[str, Set[str]] = {}
+    errors: Dict[str, str] = {}
+    for dex_name, dex_bytes in _load_dex_contexts(str(target)):
+        try:
+            resolver = DexResolver(dex_bytes)
+            for cls, parents in _build_full_parent_map(dex_bytes, resolver).items():
+                if cls in result:
+                    result[cls] |= parents
+                else:
+                    result[cls] = set(parents)
+        except Exception as e:
+            errors[dex_name] = f"{type(e).__name__}: {e}"
+            _log.warning(
+                "extract_class_hierarchy: failed on %s: %s: %s",
+                dex_name, type(e).__name__, e,
+            )
+    if not result and errors:
+        raise RuntimeError(
+            f"extract_class_hierarchy: all DEX files failed: {errors}"
+        )
+    return result
+
+
 # ----------------------------
 # Manifest APIs (optional)
 # ----------------------------
@@ -354,7 +399,14 @@ def parse_manifest(apk_path: PathT) -> Dict[str, Any]:
     from dextrace.core.apk_reader import ApkReader
 
     apk = ApkReader(str(apk_path))
-    mp = ManifestParser.parse(apk.read_file("AndroidManifest.xml"))
+    try:
+        manifest_bytes = apk.read_file("AndroidManifest.xml")
+    except KeyError:
+        raise ValueError(f"AndroidManifest.xml not found in {apk_path}")
+    mp = ManifestParser.parse(manifest_bytes)
+
+    if "error" in mp:
+        raise ValueError(f"Unreadable AndroidManifest.xml in {apk_path}: {mp['error']}")
 
     # Adjust attribute names below to match your ManifestParser implementation.
     return {
